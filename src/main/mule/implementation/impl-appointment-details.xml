@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<sub-flow name="impl-appointment-detailsSub_Flow" doc:id="3b3c6837-1cc6-454f-bd57-d3e489ca5420" >
+		<logger level="DEBUG" doc:name="Start Logger" doc:id="44b535de-5eed-45c1-823a-fe879f1538d0" message="before going to book for doctor appointment with patient ID:#[vars.id]"/>
+		<ee:transform doc:name="Setting inputPayload" doc:id="c7123b39-f402-4aad-9dcb-25196a5256f3" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="Id" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.ID]]></ee:set-variable>
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="select query for patient" doc:id="8e244c8c-ba5a-4f90-a4f4-2f1c590aeebb">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"query": "SELECT * FROM hospital_db_management.patient_details where ID="  ++ "'"  ++ vars.id ++ "'"   
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpReq"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.fetchPath')
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow reference to sapi" doc:id="eb0ca42e-0edc-4571-93bb-85f0d28090bf" name="impl-commonFlow" />
+		<choice doc:name="Choice" doc:id="269242cc-2213-44fc-833f-62af67bf783c" >
+			<when expression="#[!isEmpty(payload)]">
+				<ee:transform doc:name="Transform Message" doc:id="ad7926a4-38f6-4de2-8421-627af0a7847a" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="fileType" ><![CDATA["existingRecord"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="taking patient details to insert  in db" doc:id="6153e95c-d161-49e9-b82d-35b0ac3c7030" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.inputPayload as Object - "AcceptingCases" - "SpecialistIN"]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="fileType" ><![CDATA["insertedRecord"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="calling insert query" doc:id="244c1fe8-cd05-491f-a9bc-89ab08cd1f52" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"payload": vars.inputPayload,
+	"query": "INSERT INTO hospital_db_management.patient_details(Name,ID,Gender,DOB,MobileNumber,Address_city,Address_state,Address_zipcode,EmailID,Occupation,MaritalStatus,EmergencyContactDetails,Status,MedicalHistory)values(:Name,:ID,:Gender,:DOB,:MobileNumber,:Address_city,:Address_state,:Address_zipcode,:EmailID,:Occupation,:MaritalStatus,:EmergencyContactDetails,:Status,:MedicalHistory)"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.insertPath')
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow reference to sapi" doc:id="991a65fc-3ebc-4bbf-bf87-0d27a5b536e9" name="impl-commonFlow" />
+			</otherwise>
+		</choice>
+		<flow-ref doc:name="Flow reference to check doctor list" doc:id="62eabbc7-e44c-469f-93b7-604c05f4db00" name="impl-appointment-details-check-doctor-flow" />
+	</sub-flow>
+	<sub-flow name="impl-appointment-details-check-doctor-flow" doc:id="01f97eb4-8230-41d3-b075-dc2ccd6b0a39" >
+		<ee:transform doc:name="set case as op or emergency" doc:id="83df0898-db61-496f-952e-2bb90cba03f1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+if(vars.inputPayload.AcceptingCases == "OP")"OP" else "Emergency"]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="patientDetails" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="setting variables" doc:id="be5450ad-e0b2-4b42-a114-fc8117c47aee" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="Specailty" ><![CDATA[%dw 2.0
+output application/json
+---
+vars.inputPayload.SpecialistIN]]></ee:set-variable>
+				<ee:set-variable variableName="AcceptingCases" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="select query" doc:id="cff0a485-321f-405a-8d27-89b11110052f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"query": "SELECT * FROM hospital_db_management.doctor_details where (SpecialistIN='" ++ vars.Specailty as String ++ "') and (" ++ "AcceptingCases='"  ++ vars.AcceptingCases as String ++"')"
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.fetchPath')
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow reference to sapi" doc:id="d8ee5983-44ca-4766-9ab2-6f9b13f57f85" name="impl-commonFlow" target="doctorPayload" />
+		<choice doc:name="Choice" doc:id="05ff0c9d-ae98-46fe-91d7-4b572888d834" >
+			<when expression="#[!isEmpty(vars.doctorPayload)]">
+				<ee:transform doc:name="merge doctor and patient details" doc:id="17fe5557-44f2-472c-b2ec-daa3ba017197">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="mergedPayload"><![CDATA[%dw 2.0
+output application/csv header=false
+---
+vars.doctorPayload[0] ++((vars.inputPayload as Object) - "AcceptingCases" - "SpecialistIN")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<file:write doc:name="Write the merged files" doc:id="65bb9b65-1103-4628-a243-9df83948556f" path='#["C:\Users\Keerthi\OneDrive\Documents\appointment_details\patient_doctor" ++ vars.fileType++ ".csv"]' mode="APPEND">
+					<file:content><![CDATA[#[vars.mergedPayload]]]></file:content>
+				</file:write>
+				<logger level="INFO" doc:name="Logger" doc:id="df97fd6a-4fc7-43b4-842d-34341de28a21" message='#[vars.inputPayload.Name as String ++ " your appointment is booked for " ++ vars.doctorPayload[0].Name]' />
+				<ee:transform doc:name="set response" doc:id="f2067519-58ce-4cd1-a296-4326bd78f273">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.inputPayload.Name as String ++ " you are appointment is booked for " ++ vars.doctorPayload[0].Name]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="ad968b9a-a9b7-404c-bcd5-c2c398d354ba" message='#[vars.inputPayload.Name as String ++ "  as per your request the doctor is not available, sorry for inconvinence. your appointment is not confirmed"]'/>
+				<ee:transform doc:name="Transform Message" doc:id="6e358a30-dbb5-44b3-934f-4ee5ea599e95" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.inputPayload.Name as String ++ "  as per your request the doctor is not available, sorry for inconvinence. your appointment is not confirmed"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

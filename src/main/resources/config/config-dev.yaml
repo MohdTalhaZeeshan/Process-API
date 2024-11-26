@@ -1,0 +1,32 @@
+autoDiscovery:
+  id: ""  
+
+http:
+  host: "0.0.0.0"
+  port: "8082"
+  
+router:
+  definition: "hospital-management-papi.raml"
+  outbound: "outboundHeaders"
+  varname: "httpStatus"
+  
+sapiRequestor:
+  host: "0.0.0.0"
+  port: "8081"
+  bufferSize: "1024"
+  maxConnection: "-1"
+  idlTimeOut: "3000"
+
+  path:
+    fetchPath: '/api/fetch'
+    insertPath: '/api/insert'
+    updatePath: '/api/update'
+    deletePath: '/api/delete'
+    
+doctor:
+  idQuery: "SELECT * FROM hospital_db_management.doctor_details where ID=:ID"
+  specialistINQuery: "SELECT * FROM hospital_db_management.doctor_details where SpecialistIN=':SpecialistIN'"
+  query: "SELECT * FROM hospital_db_management.doctor_details"
+    
+ 
+ 

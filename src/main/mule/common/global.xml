@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd 
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="aa58c7ba-49f9-4bec-9c4c-96ab3f25fb63" >
+		<http:request-connection host="#[vars.httpReq.host]" port="#[vars.httpReq.port]" maxConnections="${sapiRequestor.maxConnection}" connectionIdleTimeout="${sapiRequestor.idlTimeOut}" responseBufferSize="${sapiRequestor.bufferSize}"/>
+	</http:request-config>
+
+	<file:config name="File_Config" doc:name="File Config" doc:id="75672545-fb3e-48d8-b8a6-4944892ce83e" />
+	<configuration-properties doc:name="Configuration properties" doc:id="789ac802-c151-4b1b-a212-08d2ddca7ec4" file="config\config-dev.yaml" />
+ <http:listener-config name="hospital-management-papi-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="8082" />
+    </http:listener-config>
+        <apikit:config name="hospital-management-papi-config" api="resource::10f2fb0b-5c40-47d8-acd0-fa75aec23fa6:hospital-management-papi:1.0.4:raml:zip:hospital-management-papi.raml" outboundHeadersMapName="${router.outbound}" httpStatusVarName="${router.varname}" />
+    
+
+</mule>
+
+
+
+

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<sub-flow name="fetch-patient-details" doc:id="a1ceb79f-ff59-4f54-82b6-b66539eff90c" >
+		<ee:transform doc:name="initializing id, status, requestor variables" doc:id="df2bd973-47b8-4c53-bf23-174f4091ef9d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="status" ><![CDATA[attributes.headers.status]]></ee:set-variable>
+				<ee:set-variable variableName="id" ><![CDATA[attributes.headers.id]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="bfa89a79-d6e6-4166-849a-3b2b0db3c629" >
+			<when expression="#[!isEmpty(vars.id)]">
+				<ee:transform doc:name="select query" doc:id="dedfd0ab-cfeb-4759-b22b-94883202850a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"query": "SELECT * FROM hospital_db_management.patient_details where ID="  ++ "'"  ++ vars.id ++ "'"   
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.fetchPath')
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow reference to sapi" doc:id="eb00cf16-f022-41e2-a192-8887cb0b785f" name="impl-commonFlow"/>
+			</when>
+			<when expression="#[!isEmpty(vars.status)]">
+				<ee:transform doc:name="select query" doc:id="b30fd582-78b5-42cb-9727-ff5df884f05c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"query": "SELECT * FROM hospital_db_management.patient_details where Status="  ++ "'"  ++ vars.status ++ "'"   
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.fetchPath')
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow reference to sapi" doc:id="08332bd3-bec0-44ae-8919-40236a7c0255" name="impl-commonFlow"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="select query" doc:id="cda8746d-54aa-470d-a022-5655c789bf24" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"query": "SELECT * FROM hospital_db_management.patient_details"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.fetchPath')
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow reference to sapi" doc:id="d70c74f3-813d-49f1-a9a9-6175bda9b237" name="impl-commonFlow"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="insert-or-update-patient-details" doc:id="c951409c-67c9-48a7-9eb4-16e17e2cd733" >
+		<logger level="INFO" doc:name="Start Logger" doc:id="2b1529d5-177c-4146-a628-9d027c4c86a4" message="Insert or update  the data " />
+		<ee:transform doc:name="set variables" doc:id="f62d5841-bc3e-4b15-b95a-89cf46552ad6" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="Id" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.ID]]></ee:set-variable>
+				<ee:set-variable variableName="inputPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="initializing  requestor variables" doc:id="58360bdb-dd65-4d0d-9d45-84a75ac7c2cc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"query": "SELECT * FROM hospital_db_management.patient_details where ID ='" ++ vars.Id ++ "'"
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.fetchPath')
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow reference to sapi" doc:id="f2e864c4-a6c6-44a3-85e7-874f9cf70905" name="impl-commonFlow"/>
+		<choice doc:name="Choice" doc:id="815606f7-23d8-44d1-92a7-d3ac9c94f867">
+			<when expression="#[isEmpty(payload)]">
+				<ee:transform doc:name="calling inser query" doc:id="8f5e608d-8fc6-476b-9968-bf7fb13ea12c">
+					<ee:message>
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"payload": vars.inputPayload,
+	"query": "INSERT INTO hospital_db_management.patient_details(Name,ID,Gender,DOB,MobileNumber,Address_city,Address_state,Address_zipcode,EmailID,Occupation,MaritalStatus,EmergencyContactDetails,Status,MedicalHistory)values(:Name,:ID,:Gender,:DOB,:MobileNumber,:Address_city,:Address_state,:Address_zipcode,:EmailID,:Occupation,:MaritalStatus,:EmergencyContactDetails,:Status,:MedicalHistory)"
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.insertPath')
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow reference to sapi" doc:id="e3cc29a9-b8ea-4632-898c-35a8bb847cf2" name="impl-commonFlow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="4c0c11b1-1ff5-40b6-b7de-b9faf00f2af6" message="records inserted successfully" />
+				<ee:transform doc:name="converting to csv" doc:id="1e3b0a91-cb67-4d0d-a27f-f5b01f370f84">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/csv 
+---
+vars.inputPayload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<file:write doc:name="Write the newly inserted patient records" doc:id="a79ff048-dfde-43f2-95ae-552cfe36c52a" path="C:\Users\Keerthi\OneDrive\Documents\Hospital_Management\NewlyInsertedPatientDetails.csv" config-ref="File_Config"/>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="calling update query" doc:id="87d35048-d4ca-4e66-971c-034f7c9a4278">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var Id= vars.Id as Number
+var nonN = vars.inputPayload filterObject ((value, key, index) -> !isBlank(value))
+var keys = keysOf(nonN)
+var query = keys map ((item, index) ->
+    item ++ " = :" ++ item
+) joinBy " ,"
+---
+{
+	 "query" :"UPDATE hospital_db_management.patient_details SET " ++ query as String ++ " WHERE ID = :ID;",
+    "inputparam" : nonN
+}
+ ]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="httpReq" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.updatePath')
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow reference to sapi" doc:id="61c0f09a-c154-48e4-805d-778a2bcb7016" name="impl-commonFlow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="fe0bf408-fedc-41ea-a10a-a8f2cc2bbed9" message="records updated successfully" />
+				<ee:transform doc:name="converting to csv" doc:id="2cd5c940-f1df-4d7a-9a12-3c19f266fa70">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/csv 
+---
+vars.inputPayload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<file:write doc:name="Write the upated patient records" doc:id="1fc4d601-229d-4771-a411-c4fc9197af6d" config-ref="File_Config" path="C:\Users\Keerthi\OneDrive\Documents\Hospital_Management\UpdatedPatientDetails.csv"/>
+			</otherwise>
+		</choice>
+	</sub-flow>
+	<sub-flow name="delete-patient-details" doc:id="c4cd30a8-5c68-4e94-a712-274957ed9ea8" >
+		<logger level="INFO" doc:name="Start Logger" doc:id="5436fae3-133a-486e-83fd-d1650c472d46" message="delete patient details by id" />
+		<ee:transform doc:name="initializing id avriable" doc:id="64531740-3620-4203-b583-7d05ba17cc01">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="Id"><![CDATA[attributes.headers.Id]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Set delete Query" doc:id="e5d1cace-f117-4104-8752-89ce81614d6f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  "query": "DELETE FROM hospital_db_management.patient_details where ID = " ++ "'" ++ vars.Id as String ++ "'" 
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="httpReq"><![CDATA[%dw 2.0
+output application/json
+---
+{
+	method:"post",
+	host:Mule::p('sapiRequestor.host'),
+	port:Mule::p('sapiRequestor.port'),
+	path:Mule::p('sapiRequestor.path.deletePath')
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow reference to sapi" doc:id="83d02a19-09e4-4d57-88f4-0ae2a9769fe0" name="impl-commonFlow" />
+		<choice doc:name="Choice" doc:id="f89719c8-7b1a-4729-bb65-2209b37ae8fd" >
+			<when expression="#[payload as Number != 0]">
+				<ee:transform doc:name="delete operation success" doc:id="a0676c5d-3bc0-43a3-9091-be9d75032e41">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"record deleted successfully"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<logger level="INFO" doc:name="End Logger" doc:id="c5d4f960-e2bd-4d4f-8672-c6b0357fab30" message="deleted petience details successfully by id" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="delete operation failed" doc:id="594672bf-277a-4131-b5b0-92f7f4a63b0d">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"delete operation is failed as the given id  not found"]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="End Logger" doc:id="7c9f7812-ad60-44bd-a4d9-17368816d6c7" message="delete operation is failed as the given id  not found" />
+			</otherwise>
+		</choice>
+	</sub-flow>
+</mule>

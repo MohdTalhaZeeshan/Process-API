@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd ">
+   
+    <flow name="hospital-management-papi-main">
+        <http:listener path="/api/*" config-ref="hospital-management-papi-httpListenerConfig">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="hospital-management-papi-config"/>
+		<error-handler ref="common-global-error-handError_Handler" />
+    </flow>
+    <flow name="hospital-management-papi-console">
+        <http:listener path="/console/*" config-ref="hospital-management-papi-httpListenerConfig">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="hospital-management-papi-config"/>
+		<error-handler ref="common-global-error-handError_Handler" />
+    </flow>
+    <flow name="delete:\doctor-info:hospital-management-papi-config">
+		<flow-ref doc:name="Flow reference to delete doctor details" doc:id="88d03298-b0b2-48a2-b4ca-e5021468601a" name="delete-doctor-details" />
+    </flow>
+    <flow name="delete:\patient-info:hospital-management-papi-config">
+		<flow-ref doc:name="Flow reference to delete patient details" doc:id="7f13801b-d770-4ca0-95a6-6415cb2ef8c0" name="delete-patient-details" />
+    </flow>
+    <flow name="get:\doctor-info:hospital-management-papi-config">
+		<flow-ref doc:name="Flow reference to fetch doctor details" doc:id="38ba8afb-0240-4658-9059-539e23e9d4c6" name="fetch-doctor-details" />
+    </flow>
+    <flow name="get:\patient-info:hospital-management-papi-config">
+		<flow-ref doc:name="Flow reference to fetch patient details" doc:id="6aec554a-dd1c-4659-88cd-1a5967a7fbc8" name="fetch-patient-details" />
+    </flow>
+    <flow name="post:\appointment-info:application\json:hospital-management-papi-config">
+		<flow-ref doc:name="Flow reference to appointment info" doc:id="edb8e80c-5153-45b2-a747-7c08dfede455" name="impl-appointment-detailsSub_Flow"/>
+    </flow>
+    <flow name="post:\doctor-info:application\json:hospital-management-papi-config">
+		<flow-ref doc:name="Flow reference to insert or update doctor data" doc:id="4e604917-f3ca-46c4-a7c5-1cfeed1e74bd" name="insert-or-update-doctor-details" />
+    </flow>
+    <flow name="post:\patient-info:application\json:hospital-management-papi-config">
+		<flow-ref doc:name="Flow reference to insert or update patient info" doc:id="8424090a-76ac-49f6-9b2e-d020cb51e5c0" name="insert-or-update-patient-details" />
+    </flow>
+</mule>

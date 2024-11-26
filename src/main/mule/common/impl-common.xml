@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="impl-commonFlow" doc:id="671846db-473c-4bab-b241-63bd832d23a9" >
+		<logger level="INFO" doc:name="beforeRequest" doc:id="8a35917f-8584-47c3-96c8-42d864e86573" message="before creating patient data into db with patient ID:#[vars.id]"/>
+		<http:request method="#[vars.httpReq.method]" doc:name="Requestor to sapi" doc:id="2047a639-fd1c-46db-8018-0e936f8921a5" path="#[vars.httpReq.path]" config-ref="HTTP_Request_configuration" responseTimeout="60000000"/>
+		<logger level="INFO" doc:name="afterRequest" doc:id="845ce339-e035-4f1d-a206-335c652dc383" message="patient data created successfully with patient ID:#[vars.id]"/>
+	</flow>
+</mule>
